@@ -1,69 +1,40 @@
 # signal-ops-cleanup-deck
 
-`signal-ops-cleanup-deck` packages a practical automation exercise in JavaScript. The emphasis is on deterministic behavior, a small public API, and examples that explain the tradeoffs.
+`signal-ops-cleanup-deck` explores automation with a small JavaScript codebase and local fixtures. The technical goal is to develop a JavaScript command-oriented project for cleanup scenarios with deny and allow fixtures, explainable decision traces, and local-only command execution.
 
-## How I Read Signal Ops Cleanup Deck
+## Why It Exists
 
-The useful thing to inspect here is how the same score rule is represented in code, metadata, and examples. If those three pieces disagree, the audit script should make the drift visible.
+I want this repository to be useful as a quick reading exercise: fixtures first, implementation second, verifier last.
 
-## Problem Shape
+## Signal Ops Cleanup Deck Review Notes
 
-The goal is to capture the core behavior in code and make the surrounding assumptions obvious. A reader should be able to run the verifier, open the fixtures, and understand why each decision was made.
+Start with `dry-run spread` and `dry-run spread`. Those cases create the widest score spread in this repo, so they are the best quick check when the model changes.
 
-## Scenario Walkthrough
+## Features
 
-`degraded` is the first example I would inspect because it lands on the `review` path with a score of -44. The broader file also keeps `degraded` at -44 and `surge` at 185, which gives the model a useful low-to-high spread.
+- `fixtures/domain_review.csv` adds cases for dry-run spread and rename risk.
+- `metadata/domain-review.json` records the same cases in structured form.
+- `config/review-profile.json` captures the read order and the two review questions.
+- `examples/signal-ops-cleanup-walkthrough.md` walks through the case spread.
+- The JavaScript code includes a review path for `dry-run spread` and `dry-run spread`.
+- `docs/field-notes.md` explains the strongest and weakest cases.
 
-## Internal Model
+## Architecture Notes
 
-The core is a scoring model over demand, capacity, latency, risk, and weight. That keeps dry-run output, file plans, and safety rails in one explicit decision path. The threshold is 172, with risk penalty 7, latency penalty 2, and weight bonus 2. The JavaScript version uses native modules and a small Node test path.
+The core code exposes a scoring path and the added review layer uses `signal`, `slack`, `drag`, and `confidence`. The domain terms are `dry-run spread`, `rename risk`, `operator cost`, and `idempotence`.
 
-## Main Behaviors
+The added JavaScript path is deliberately direct, with fixtures doing most of the explaining.
 
-- Models dry-run output with deterministic scoring and explicit review decisions.
-- Uses fixture data to keep file plans changes visible in code review.
-- Includes extended examples for safety rails, including `surge` and `degraded`.
-- Documents idempotent checks tradeoffs in `docs/operations.md`.
-- Runs locally with a single verification command and no external credentials.
-
-## How To Run It
+## Usage
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1
 ```
 
-This runs the language-level build or test path against the compact fixture set.
+## Tests
 
-## Validation
+That command is also the regression path. It verifies the domain cases and catches mismatches between the CSV, metadata, and code.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/audit.ps1
-```
+## Limitations And Roadmap
 
-The audit command checks repository structure and README constraints before it delegates to the verifier.
-
-## Repository Map
-
-- `src`: primary implementation
-- `tests`: verification harness
-- `fixtures`: compact golden scenarios
-- `examples`: expanded scenario set
-- `metadata`: project constants and verification metadata
-- `docs`: operations and extension notes
-- `scripts`: local verification and audit commands
-- `package.json`: Node package scripts
-
-## Follow-Up Work
-
-- Add a short report command that prints the score breakdown for a single scenario.
-- Add malformed input fixtures so the failure path is as visible as the happy path.
-- Split the scoring constants into a typed configuration object and validate it before use.
-- Add one more automation fixture that focuses on a malformed or borderline input.
-
-## Known Edges
-
-This code is local-first. It makes no claim about deployed usage and avoids credentials, hosted state, and environment-specific setup.
-
-## Run It Locally
-
-Clone the repository, enter the directory, and run the verifier. No database server, cloud account, or token is required.
+This remains a local project with deterministic fixtures. It does not depend on credentials, hosted services, or live data. Future work should add richer malformed inputs before widening the public API.
